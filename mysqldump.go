@@ -3,10 +3,12 @@ package mysqldump
 import (
 	"bufio"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -141,21 +143,26 @@ func Dump(dns string, opts ...DumpOption) error {
 		tables = o.tables
 	}
 
-	// 3. 导出表
-	for _, table := range tables {
-		// 删除表
-		if o.isDropTable {
+	// 3. 导出删除表语句
+	if o.isDropTable {
+		buf.WriteString("SET FOREIGN_KEY_CHECKS=0;\n")
+		for _, table := range tables {
+			// 删除表
 			buf.WriteString(fmt.Sprintf("DROP TABLE IF EXISTS `%s`;\n", table))
 		}
+		buf.WriteString("\n\n")
+	}
 
-		// 导出表结构
+	// 4. 导出表
+	for _, table := range tables {
+		// 4.1 导出表结构
 		err = writeTableStruct(db, table, buf)
 		if err != nil {
 			log.Printf("[error] %v \n", err)
 			return err
 		}
 
-		// 导出表数据
+		// 4.2 导出表数据
 		if o.isData {
 			err = writeTableData(db, table, buf)
 			if err != nil {
@@ -360,7 +367,19 @@ func writeTableData(db *sql.DB, table string, buf *bufio.Writer) error {
 						ssql += "false"
 					}
 				case "JSON":
-					ssql += fmt.Sprintf("'%s'", col)
+					// JSON格式化，例如：{"obj":{\"max\":456, \"min\": 123}}
+					var v interface{}
+					err := json.Unmarshal([]byte(fmt.Sprintf("%s", col)), &v)
+					if err == nil {
+						buff, err := json.Marshal(v)
+						if err == nil {
+							ssql += strconv.Quote(string(buff))
+						} else {
+							log.Printf("json.Marshal error: %s", err)
+						}
+					} else {
+						log.Printf("json.Unmarshal error: %s", err)
+					}
 				default:
 					// unsupported type
 					log.Printf("unsupported type: %s", Type)

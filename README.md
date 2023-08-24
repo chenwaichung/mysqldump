@@ -14,12 +14,13 @@
 
 A zero-dependency,all data types are supported, high-performance, concurrent mysqldump tool implemented in golang.
 
-## Features 
+Tips: fork from [github.com/jarvanstack/mysqldump]( "github.com/jarvanstack/mysqldump")
+
+## Features
 
 * Supports custom Writer: data can be written to any Writer, such as local files, multiple file storage, remote servers, cloud storage, etc. (default console output).
 * Supports all MySQL data types QuickStart.
 * Support Merge Insert Option in Source Greatly improve data recovery performance
-
 
 ## QuickStart
 
@@ -75,7 +76,7 @@ INSERT INTO `test` VALUES (1,'abc','def',0x61626300000000000000,0x646566,0x74696
 import (
 	"os"
 
-	"github.com/jarvanstack/mysqldump"
+	"github.com/chenwaichung/mysqldump"
 )
 
 func main() {
@@ -166,7 +167,7 @@ INSERT INTO `test` VALUES (1,'abc','def',0x61626300000000000000,0x646566,0x74696
 import (
 	"os"
 
-	"github.com/jarvanstack/mysqldump"
+	"github.com/chenwaichung/mysqldump"
 )
 
 func main() {
@@ -182,4 +183,3 @@ func main() {
 	)
 }
 ```
-

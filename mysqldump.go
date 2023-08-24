@@ -26,6 +26,8 @@ type dumpOption struct {
 
 	// 导出指定表, 与 isAllTables 互斥, isAllTables 优先级高
 	tables []string
+	// 忽略指定表的数据导出，例如一些日志表
+	ignoreDataTables []string
 	// 导出全部表
 	isAllTable bool
 	// 是否删除表
@@ -33,6 +35,21 @@ type dumpOption struct {
 
 	// writer 默认为 os.Stdout
 	writer io.Writer
+}
+
+// 是否忽略导出数据的表
+func (o *dumpOption) IsIgnoreDataTable(table string) bool {
+	if len(o.ignoreDataTables) == 0 {
+		return false
+	}
+
+	for _, ignoreDataTable := range o.ignoreDataTables {
+		if ignoreDataTable == table {
+			return true
+		}
+	}
+
+	return false
 }
 
 type DumpOption func(*dumpOption)
@@ -55,6 +72,13 @@ func WithData() DumpOption {
 func WithTables(tables ...string) DumpOption {
 	return func(option *dumpOption) {
 		option.tables = tables
+	}
+}
+
+// 忽略指定表的数据导出，例如一些日志表
+func WithIgnroeTables(tables ...string) DumpOption {
+	return func(option *dumpOption) {
+		option.ignoreDataTables = tables
 	}
 }
 
@@ -164,6 +188,11 @@ func Dump(dns string, opts ...DumpOption) error {
 
 		// 4.2 导出表数据
 		if o.isData {
+			// 4.2.1 判断是否忽略导出表数据
+			if o.IsIgnoreDataTable(table) {
+				continue
+			}
+			// 4.2.2 导出表数据
 			err = writeTableData(db, table, buf)
 			if err != nil {
 				log.Printf("[error] %v \n", err)

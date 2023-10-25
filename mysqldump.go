@@ -384,7 +384,13 @@ func writeTableData(db *sql.DB, table string, buf *bufio.Writer) error {
 					}
 					ssql += fmt.Sprintf("%s", string(t))
 				case "CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT":
-					ssql += fmt.Sprintf("'%s'", strings.Replace(fmt.Sprintf("%s", col), "'", "''", -1))
+					str := strings.Replace(fmt.Sprintf("%s", col), "'", "''", -1) // 替换 ' 为 ''
+					if (strings.HasPrefix(str, "{") && strings.HasSuffix(str, "}")) || (strings.HasPrefix(str, "[") && strings.HasSuffix(str, "]")) {
+						str = strings.Replace(str, "\\", "\\\\", -1) // 替换 \ 为 \\
+						str = strings.Replace(str, "\"", "\\\"", -1) // 替换 " 为 \"
+					}
+
+					ssql += fmt.Sprintf("'%s'", str)
 				case "BIT", "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB":
 					ssql += fmt.Sprintf("0x%X", col)
 				case "ENUM", "SET":
